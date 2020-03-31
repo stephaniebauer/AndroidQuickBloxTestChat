@@ -1,12 +1,9 @@
 package com.quickblox.sample.chat.java.ui.activity;
 
 import android.app.Activity;
-import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.PersistableBundle;
 import android.os.SystemClock;
 import android.os.Vibrator;
@@ -35,22 +32,17 @@ import com.quickblox.chat.model.QBAttachment;
 import com.quickblox.chat.model.QBChatDialog;
 import com.quickblox.chat.model.QBChatMessage;
 import com.quickblox.chat.model.QBDialogType;
-import com.quickblox.content.model.QBFile;
 import com.quickblox.core.QBEntityCallback;
 import com.quickblox.core.exception.QBResponseException;
 import com.quickblox.sample.chat.java.R;
 import com.quickblox.sample.chat.java.managers.DialogsManager;
 import com.quickblox.sample.chat.java.ui.adapter.AttachmentPreviewAdapter;
 import com.quickblox.sample.chat.java.ui.adapter.ChatAdapter;
-import com.quickblox.sample.chat.java.ui.adapter.listeners.AttachClickListener;
 import com.quickblox.sample.chat.java.ui.adapter.listeners.MessageLongClickListener;
 import com.quickblox.sample.chat.java.ui.views.AttachmentPreviewAdapterView;
 import com.quickblox.sample.chat.java.utils.SharedPrefsHelper;
-import com.quickblox.sample.chat.java.utils.SystemPermissionHelper;
 import com.quickblox.sample.chat.java.utils.ToastUtils;
 import com.quickblox.sample.chat.java.utils.chat.ChatHelper;
-import com.quickblox.sample.chat.java.utils.imagepick.ImagePickHelper;
-import com.quickblox.sample.chat.java.utils.imagepick.OnImagePickedListener;
 import com.quickblox.sample.chat.java.utils.qb.PaginationHistoryListener;
 import com.quickblox.sample.chat.java.utils.qb.QbChatDialogMessageListenerImp;
 import com.quickblox.sample.chat.java.utils.qb.QbDialogHolder;
@@ -66,14 +58,11 @@ import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smackx.muc.DiscussionHistory;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -83,7 +72,7 @@ import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-public class ChatActivity extends BaseActivity implements OnImagePickedListener, QBMessageStatusListener, DialogsManager.ManagingDialogsCallbacks {
+public class ChatActivity extends BaseActivity implements QBMessageStatusListener, DialogsManager.ManagingDialogsCallbacks {
     private static final String TAG = ChatActivity.class.getSimpleName();
 
     public static final int REQUEST_CODE_SELECT_PEOPLE = 752;
@@ -117,9 +106,6 @@ public class ChatActivity extends BaseActivity implements OnImagePickedListener,
     private ChatAdapter chatAdapter;
     private AttachmentPreviewAdapter attachmentPreviewAdapter;
     private ConnectionListener chatConnectionListener;
-    private ImageAttachClickListener imageAttachClickListener;
-    private VideoAttachClickListener videoAttachClickListener;
-    private FileAttachClickListener fileAttachClickListener;
     private MessageLongClickListenerImpl messageLongClickListener;
     private QBMessageStatusesManager qbMessageStatusesManager;
     private ChatMessageListener chatMessageListener = new ChatMessageListener();
@@ -262,9 +248,6 @@ public class ChatActivity extends BaseActivity implements OnImagePickedListener,
             finish();
         }
 
-        chatAdapter.setAttachImageClickListener(imageAttachClickListener);
-        chatAdapter.setAttachVideoClickListener(videoAttachClickListener);
-        chatAdapter.setAttachFileClickListener(fileAttachClickListener);
         chatAdapter.setMessageLongClickListener(messageLongClickListener);
         ChatHelper.getInstance().addConnectionListener(chatConnectionListener);
     }
@@ -380,41 +363,6 @@ public class ChatActivity extends BaseActivity implements OnImagePickedListener,
         popupMenu.show();
     }
 
-    private void showFilePopup(int itemViewType, final QBAttachment attachment, View view) {
-        PopupMenu popupMenu = new PopupMenu(this, view);
-        popupMenu.getMenuInflater().inflate(R.menu.menu_file_popup, popupMenu.getMenu());
-
-        if (itemViewType == ChatAdapter.TYPE_TEXT_RIGHT || itemViewType == ChatAdapter.TYPE_ATTACH_RIGHT) {
-            popupMenu.setGravity(Gravity.RIGHT);
-        } else if (itemViewType == ChatAdapter.TYPE_TEXT_LEFT || itemViewType == ChatAdapter.TYPE_ATTACH_LEFT) {
-            popupMenu.setGravity(Gravity.LEFT);
-        }
-
-        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                if (item.getItemId() == R.id.menu_file_save) {
-                    saveFileToStorage(attachment);
-                }
-                return true;
-            }
-        });
-        popupMenu.show();
-    }
-
-    private void saveFileToStorage(QBAttachment attachment) {
-        File file = new File(getApplication().getFilesDir(), attachment.getName());
-        String url = QBFile.getPrivateUrlForUID(attachment.getId());
-        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, file.getName());
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-        request.allowScanningByMediaScanner();
-        DownloadManager manager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
-        if (manager != null) {
-            manager.enqueue(request);
-        }
-    }
-
     private void startForwardingMessage(QBChatMessage message) {
         ForwardToActivity.start(this, message);
     }
@@ -526,33 +474,8 @@ public class ChatActivity extends BaseActivity implements OnImagePickedListener,
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSIONS_FOR_SAVE_FILE_IMAGE_REQUEST && grantResults.length > 0 && grantResults[0] != -1) {
-            openImagePicker();
+
         }
-    }
-
-    @Override
-    public void onImagePicked(int requestCode, File file) {
-        switch (requestCode) {
-            case REQUEST_CODE_ATTACHMENT:
-                attachmentPreviewAdapter.add(file);
-                break;
-        }
-    }
-
-    @Override
-    public void onImagePickError(int requestCode, Exception e) {
-        Log.d(TAG, e.getMessage());
-        showErrorSnackbar(0, e, new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                openImagePicker();
-            }
-        });
-    }
-
-    @Override
-    public void onImagePickClosed(int ignored) {
-
     }
 
     public void onSendChatClick(View view) {
@@ -621,7 +544,7 @@ public class ChatActivity extends BaseActivity implements OnImagePickedListener,
                 if (attachmentPreviewAdapter.getCount() >= MAX_ATTACHMENTS_COUNT) {
                     ToastUtils.shortToast(R.string.error_attachment_count);
                 } else {
-                    openImagePicker();
+
                 }
             }
         });
@@ -639,7 +562,7 @@ public class ChatActivity extends BaseActivity implements OnImagePickedListener,
                         showErrorSnackbar(0, e, new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                openImagePicker();
+
                             }
                         });
                     }
@@ -649,14 +572,7 @@ public class ChatActivity extends BaseActivity implements OnImagePickedListener,
         previewAdapterView.setAdapter(attachmentPreviewAdapter);
     }
 
-    private void openImagePicker() {
-        SystemPermissionHelper permissionHelper = new SystemPermissionHelper(this);
-        if (permissionHelper.isSaveImagePermissionGranted()) {
-            new ImagePickHelper().pickAnImage(this, REQUEST_CODE_ATTACHMENT);
-        } else {
-            permissionHelper.requestPermissionsForSaveFileImage();
-        }
-    }
+
 
     private void initMessagesRecyclerView() {
         chatMessagesRecyclerView = findViewById(R.id.rv_chat_messages);
@@ -672,9 +588,6 @@ public class ChatActivity extends BaseActivity implements OnImagePickedListener,
                 new StickyRecyclerHeadersDecoration(chatAdapter));
 
         chatMessagesRecyclerView.setAdapter(chatAdapter);
-        imageAttachClickListener = new ImageAttachClickListener();
-        videoAttachClickListener = new VideoAttachClickListener();
-        fileAttachClickListener = new FileAttachClickListener();
         messageLongClickListener = new MessageLongClickListenerImpl();
     }
 
@@ -978,38 +891,6 @@ public class ChatActivity extends BaseActivity implements OnImagePickedListener,
         @Override
         public void processError(QBChatException e, QBChatMessage qbChatMessage) {
             Log.d(TAG, "System Messages Error: " + e.getMessage() + "With MessageID: " + qbChatMessage.getId());
-        }
-    }
-
-    private class ImageAttachClickListener implements AttachClickListener {
-
-        @Override
-        public void onAttachmentClicked(int itemViewType, View view, QBAttachment attachment) {
-            if (attachment != null) {
-                String url = QBFile.getPrivateUrlForUID(attachment.getId());
-                AttachmentImageActivity.start(ChatActivity.this, url);
-            }
-        }
-    }
-
-    private class VideoAttachClickListener implements AttachClickListener {
-
-        @Override
-        public void onAttachmentClicked(int itemViewType, View view, QBAttachment attachment) {
-            if (attachment != null) {
-                String url = QBFile.getPrivateUrlForUID(attachment.getId());
-                AttachmentVideoActivity.start(ChatActivity.this, attachment.getName(), url);
-            }
-        }
-    }
-
-    private class FileAttachClickListener implements AttachClickListener {
-
-        @Override
-        public void onAttachmentClicked(int itemViewType, View view, QBAttachment attachment) {
-            if (attachment != null) {
-                showFilePopup(itemViewType, attachment, view);
-            }
         }
     }
 

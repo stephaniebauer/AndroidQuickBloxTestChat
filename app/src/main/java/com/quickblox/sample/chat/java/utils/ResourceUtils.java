@@ -28,11 +28,4 @@ public class ResourceUtils {
         return (int) App.getInstance().getResources().getDimension(dimenId);
     }
 
-    public static int dpToPx(int dp) {
-        return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
-    }
-
-    public static int pxToDp(int px) {
-        return (int) (px / Resources.getSystem().getDisplayMetrics().density);
-    }
 }

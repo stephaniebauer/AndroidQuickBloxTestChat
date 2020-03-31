@@ -24,10 +24,6 @@ public class ActivityLifecycle implements Application.ActivityLifecycleCallbacks
         return instance;
     }
 
-    public boolean isForeground() {
-        return foreground;
-    }
-
     public boolean isBackground() {
         return !foreground;
     }

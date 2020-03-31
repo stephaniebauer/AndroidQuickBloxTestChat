@@ -68,14 +68,6 @@
             android:screenOrientation="portrait" />
 
         <activity
-            android:name=".ui.activity.AttachmentImageActivity"
-            android:screenOrientation="portrait" />
-
-        <activity
-            android:name=".ui.activity.AttachmentVideoActivity"
-            android:screenOrientation="portrait" />
-
-        <activity
             android:name=".ui.activity.AppInfoActivity"
             android:screenOrientation="portrait" />
 

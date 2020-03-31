@@ -51,13 +51,6 @@ public class UsersAdapter extends BaseAdapter {
         notifyDataSetChanged();
     }
 
-    public void removeUsers(List<QBUser> users) {
-        for (QBUser user : users) {
-            userList.remove(user);
-        }
-        notifyDataSetChanged();
-    }
-
     public void clearList() {
         userList.clear();
         notifyDataSetChanged();

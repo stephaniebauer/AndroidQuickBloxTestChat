@@ -147,18 +147,6 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.NewMessageView
         }
     }
 
-    public void setAttachImageClickListener(AttachClickListener clickListener) {
-        attachImageClickListener = clickListener;
-    }
-
-    public void setAttachVideoClickListener(AttachClickListener clickListener) {
-        attachVideoClickListener = clickListener;
-    }
-
-    public void setAttachFileClickListener(AttachClickListener clickListener) {
-        attachFileClickListener = clickListener;
-    }
-
     public void setMessageLongClickListener(MessageLongClickListener longClickListener) {
         messageLongClickListener = longClickListener;
     }
@@ -725,10 +713,6 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.NewMessageView
     /**
      * @return string in "Month Day" format, i.e. <b>APRIL 25</b>
      */
-    public static String getDate(long milliseconds) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM dd", Locale.getDefault());
-        return dateFormat.format(new Date(milliseconds * 1000));
-    }
 
     private QBAttachment getAttachment(int position) {
         QBChatMessage chatMessage = getItem(position);

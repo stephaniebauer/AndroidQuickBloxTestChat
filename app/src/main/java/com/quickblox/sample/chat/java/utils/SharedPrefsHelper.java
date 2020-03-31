@@ -121,11 +121,6 @@ public class SharedPrefsHelper {
         return has(QB_USER_LOGIN) && has(QB_USER_PASSWORD);
     }
 
-    public void clearAllData() {
-        SharedPreferences.Editor editor = getEditor();
-        editor.clear().commit();
-    }
-
     private SharedPreferences.Editor getEditor() {
         return sharedPreferences.edit();
     }
